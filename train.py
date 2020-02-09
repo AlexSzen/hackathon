@@ -13,7 +13,7 @@ import copy
 def unscale(img):
     """ unscale and return image"""
     img = img / 2 + 0.5     # unnormalize
-    npimg = img.detach().numpy()
+    npimg = img.cpu().detach().numpy()
     return npimg
 
 ### Helper to create net directories in results/
@@ -93,21 +93,21 @@ def train_model(model, dataloaders, device, criterion, optimizer, num_epochs, re
             print('%s loss = %f' %(phase, epoch_loss))
             if phase == 'train':
                 train_loss_list.append(epoch_loss)
-                if epoch % 1 == 0:
+                if epoch % 100 == 0:
                     npimg = unscale(inputs)
 
                     np.save(os.path.join(result_dir,"inputs_train_%03d")%(epoch+1), npimg)
-                    np.save(os.path.join(result_dir,"outputs_train_%03d")%(epoch+1), outputs.detach().numpy())
-                    np.save(os.path.join(result_dir,"labels_train_%03d")%(epoch+1), labels.detach().numpy())
+                    np.save(os.path.join(result_dir,"outputs_train_%03d")%(epoch+1), outputs.cpu().detach().numpy())
+                    np.save(os.path.join(result_dir,"labels_train_%03d")%(epoch+1), labels.cpu().detach().numpy())
             else :
                 val_loss_list.append(epoch_loss)
 
-                if epoch % 5 == 0:
+                if epoch % 100 == 0:
                     npimg = unscale(inputs)
 
                     np.save(os.path.join(result_dir,"inputs_val_%03d")%(epoch+1), npimg)
-                    np.save(os.path.join(result_dir,"outputs_val_%03d")%(epoch+1), outputs.detach().numpy())
-                    np.save(os.path.join(result_dir,"labels_val_%03d")%(epoch+1), labels.detach().numpy())
+                    np.save(os.path.join(result_dir,"outputs_val_%03d")%(epoch+1), outputs.cpu().detach().numpy())
+                    np.save(os.path.join(result_dir,"labels_val_%03d")%(epoch+1), labels.cpu().detach().numpy())
 
             ### take first loss as reference at first epoch
             if phase == 'val' and epoch == 0:
@@ -129,17 +129,17 @@ def train_model(model, dataloaders, device, criterion, optimizer, num_epochs, re
 if __name__ == "__main__":
 
     # path of data
-    data_path = "/Users/alex/Desktop/Projects/hackathon/data/CMP_facade_DB_base/base"
+    data_path = "/data/bmoseley/DPhil/temp/hackathon/data/CMP_facade_DB_base/base/"
 
     # create result dir
     createFolder("results/")
     result_dir = "results/"
 
     # cpu or gpu
-    device = "cpu"
+    device = "cuda"
 
     # number of epochs
-    n_epochs = 1
+    n_epochs = 3000
 
     # batch_size
     batch_size = 8
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     model, train_loss_list, val_loss_list = train_model(net, cdl_dataloaders, device, criterion, optimizer, n_epochs, result_dir)
 
     ### save net, losses and info in corresponding net directory
-    torch.save(net, os.path.join(result_dir,"model.pt"))
+    torch.save(net.cpu(), os.path.join(result_dir,"model.pt"))
 
     np.save(os.path.join(result_dir,"train_loss.npy"), train_loss_list)
     np.save(os.path.join(result_dir,"val_loss.npy"), val_loss_list)
